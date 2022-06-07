@@ -45,9 +45,6 @@ function findTagsPair(DATA) {
   const nameTagsPairArr = Object.entries(nameTagsPair);
 
   for (let i = 0; i < nameTagsPairArr.length; i++) {
-    if (nameTagsPairArr[i][1].length <= 3) {
-      return;
-    }
     let matches = 0;
     const sortedTags = nameTagsPairArr[i][1].sort();
 
