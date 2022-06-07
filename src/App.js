@@ -1,87 +1,70 @@
-import React from "react";
-import "./App.css";
-import _ from "lodash";
+import React from 'react';
+import './App.css';
 
 const App = () => {
-  // * Get data from json
-  const data = _.get(JSON.parse(JSON_DATA), "recipients", []);
+  const [namePair, setNamePair] = React.useState([]);
 
-  // * Mapping every user
-  const users = _.map(data, (user) => {
-    // * Current user prop
-    const id = _.get(user, "id", null);
-    const name = _.get(user, "name", null);
-    const tags = _.get(user, "tags", []);
-
-    // * Mapping with another user
-    const newData = _.map(data, (o) => {
-      const n = _.get(o, "name", null);
-      const t = _.get(o, "tags", []);
-      // * Check is not same as current user
-      if (name !== n) {
-        // * Compare current user tag with other user tag
-        const dataResult = _.filter(tags, (value) => _.includes(t, value));
-        // * Check dataResult is more than 2 tags
-        if (dataResult.length > 1) return { id, name, tags: dataResult };
-      }
-    });
-
-    // * Remove undefined from newData
-    return _.compact(newData);
-  });
-
-  // * Returns the new flattened array
-  const newUsersData = _.flattenDeep(users);
-
-  // * Group by union tag from newUsersData and finally convert the object to array
-  const groupByUnionTag = _.toPairsIn(_.groupBy(newUsersData, "tags"));
-
-  // * Formatting data from groupByUnionTag
-  const formattedData = _.map(groupByUnionTag, (item) => ({
-    title: item[0],
-    users: _.map(_.unionBy(item[1], "name"), (v) => v.name),
-  }));
+  React.useEffect(() => {
+    console.time('F1');
+    let i = 0;
+    while (i < 1) {
+      setNamePair(
+        findTagsPair(
+          JSON.parse(JSON_DATA).recipients.filter(
+            (item) => item.tags.length >= 2
+          )
+        )
+      );
+      i++;
+    }
+    console.timeEnd('F1');
+  }, []);
 
   return (
-    <div
-      style={{
-        width: "100vw",
-      }}
-    >
-      <h3>Default Data:</h3>
-      <table>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Tags</th>
-        </tr>
-        {_.map(data, (o) => (
-          <tr>
-            <td>{_.get(o, "id", "")}</td>
-            <td>{_.get(o, "name", "")}</td>
-            <td>{_.toString(_.get(o, "tags", []))}</td>
-          </tr>
-        ))}
-      </table>
-      <br />
-      <h3>Result:</h3>
-      <table>
-        <tr>
-          <th>No.</th>
-          <th>Tags</th>
-          <th>Users</th>
-        </tr>
-        {_.map(formattedData, (o, index) => (
-          <tr>
-            <td>{index + 1}</td>
-            <td>{_.get(o, "title", "")}</td>
-            <td>{_.get(o, "users", []).toString()}</td>
-          </tr>
-        ))}
-      </table>
+    <div>
+      {namePair.map((item, index) => (
+        <div key={index}>
+          {index + 1}). {item}
+        </div>
+      ))}
     </div>
   );
 };
+
+function findTagsPair(DATA) {
+  const nameTagsPair = {};
+  const namePair = [];
+
+  for (let i = 0; i < DATA.length; i++) {
+    for (let j = i + 1; j < DATA.length; j++) {
+      const tags = [...DATA[i].tags, ...DATA[j].tags];
+      nameTagsPair[`${DATA[i].name}, ${DATA[j].name}`] = tags;
+    }
+  }
+
+  const nameTagsPairArr = Object.entries(nameTagsPair);
+
+  for (let i = 0; i < nameTagsPairArr.length; i++) {
+    if (nameTagsPairArr[i][1].length <= 3) {
+      return;
+    }
+    let matches = 0;
+    const sortedTags = nameTagsPairArr[i][1].sort();
+
+    let tempMatch = '';
+    for (let j = 1; j < sortedTags.length; j++) {
+      if (sortedTags[j] === sortedTags[j - 1] && tempMatch !== sortedTags[j]) {
+        tempMatch = sortedTags[j];
+        matches++;
+      }
+    }
+
+    if (matches >= 2) {
+      namePair.push(nameTagsPairArr[i][0]);
+    }
+  }
+  return namePair;
+}
 
 export default App;
 
